@@ -1,0 +1,89 @@
+from __future__ import unicode_literals, print_function
+from . import _mapnik
+import subprocess, os.path, json
+
+try:
+    import yaml
+except:
+    yaml = None
+    
+    
+def get_basepath(fn, abspath):
+    if not abspath:
+        return ''
+    
+    a,b=os.path.split(fn)
+    return a
+    
+def prepare_map_string(fn, tabpp, scale, srs, avoidEdges, abspath):
+    if open(fn).read(6)=='scale:':
+
+        convfn=os.path.splitext(fn)[0]+"-conv.mml"
+        if not os.path.exists(convfn) or os.stat(convfn).st_mtime < os.stat(fn).st_mtime:
+            if yaml is None:
+                raise Exception("need pyyaml to convert yaml file to json format [call pip install --user pyyaml]")
+            src = yaml.load(open(fn))
+            json.dump(src, open(convfn,'w'))
+        fn = convfn            
+
+
+    cc=[l for l in subprocess.check_output(['carto','-q',fn]).split("\n") if not l.startswith('[millstone')]
+
+    if scale!=None:
+        for i,c in enumerate(cc):
+            if 'ScaleDenominator' in c:
+                sd=c.strip()[21:-22]
+                nsd=str(int(sd)*scale)
+                c=c.replace(sd, nsd)
+                cc[i]=c
+
+    
+
+    if avoidEdges:
+        for i,c in enumerate(cc):
+            if '<ShieldSymbolizer ' in c:
+                #print('add avoid-edges to',c)
+                cs = c.replace("ShieldSymbolizer ", "ShieldSymbolizer avoid-edges=\"true\" ")
+                cc[i]=cs
+
+    if tabpp != None:
+        cc=[l.replace("planet_osm",tabpp) for l in cc]
+
+    return cc, get_basepath(fn,abspath)
+
+
+def load_mapnik_carto(fn, tabpp = None, scale=None, srs=None, mp=None, avoidEdges=False, abspath=True, nt=8, force=False):
+    """load carto map style from fn. Specify table prfx (replacing 'planet_osm') tabpp, scale, map srs etc."""
+
+    if mp==None:
+        mp = _mapnik.Map(256*nt,256*nt)
+
+    convfn = "%s-conv-%s-%s-%s-%s.xml" % (fn, tabpp,scale,srs,avoidEdges)
+    
+    if not force and os.path.exists(convfn) and os.stat(convfn).st_mtime > os.stat(fn).st_mtime:
+        _mapnik.load_map_string(mp,open(convfn).read(), False, get_basepath(fn,abspath))
+        return mp
+        
+
+    cc, basepath = prepare_map_string(fn, tabpp, scale, srs, avoidEdges, abspath)
+    
+    
+    _mapnik.load_map_string(mp,"\n".join(cc),False,basepath)
+
+    
+
+    if not scale is None:
+        for l in mp.layers:
+            if l.minimum_scale_denominator != 0:
+                l.minimum_scale_denominator = int(l.minimum_scale_denominator*scale)
+            if l.maximum_scale_denominator < 1e100:
+                l.maximum_scale_denominator = int(l.maximum_scale_denominator*scale)
+
+
+    if not srs is None:
+        mp.srs=srs
+
+    
+    open(convfn,'w').write(_mapnik.save_map_to_string(mp))
+
+    return mp

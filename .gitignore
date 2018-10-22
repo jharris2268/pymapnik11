@@ -1,0 +1,5 @@
+pymapnik11.egg-info
+pymapnik11/*.pyc
+old
+dist
+build
