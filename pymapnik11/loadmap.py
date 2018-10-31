@@ -37,7 +37,7 @@ def get_basepath(fn, abspath):
     a,b=os.path.split(fn)
     return a
     
-def prepare_map_string(fn, tabpp, scale, srs, avoidEdges, abspath):
+def call_carto(fn):
     if open(fn).read(6)=='scale:':
 
         convfn=os.path.splitext(fn)[0]+"-conv.mml"
@@ -50,7 +50,10 @@ def prepare_map_string(fn, tabpp, scale, srs, avoidEdges, abspath):
 
 
     cc=[l for l in subprocess.check_output(['carto','-q',fn]).split("\n") if not l.startswith('[millstone')]
+    return cc
 
+
+def prepare_map_string(cc, tabpp, scale, srs, avoidEdges):
     if scale!=None:
         for i,c in enumerate(cc):
             if 'ScaleDenominator' in c:
@@ -71,7 +74,7 @@ def prepare_map_string(fn, tabpp, scale, srs, avoidEdges, abspath):
     if tabpp != None:
         cc=[l.replace("planet_osm",tabpp) for l in cc]
 
-    return cc, get_basepath(fn,abspath)
+    return cc
 
 
 def load_mapnik_carto(fn, tabpp = None, scale=None, srs=None, mp=None, avoidEdges=False, abspath=True, nt=8, force=False):
@@ -80,16 +83,22 @@ def load_mapnik_carto(fn, tabpp = None, scale=None, srs=None, mp=None, avoidEdge
     if mp==None:
         mp = _mapnik.Map(256*nt,256*nt)
 
-    convfn = "%s-conv-%s-%s-%s-%s.xml" % (fn, tabpp,scale,srs,avoidEdges)
+    #convfn = "%s-conv-%s-%s-%s-%s.xml" % (fn, tabpp,scale,srs,avoidEdges)
+    convfn = "%s-conv.xml" % (fn,)
     
+    cc=None
     if not force and os.path.exists(convfn) and os.stat(convfn).st_mtime > os.stat(fn).st_mtime:
-        _mapnik.load_map_string(mp,open(convfn).read(), False, get_basepath(fn,abspath))
-        return mp
+        #_mapnik.load_map_string(mp,open(convfn).read(), False, get_basepath(fn,abspath))
+        #return mp
+        cc = [c.strip() for c in open(convfn)]
+    else:
+        cc = call_carto(fn)
+        open(convfn,'w').write("\n".join(cc))
         
 
-    cc, basepath = prepare_map_string(fn, tabpp, scale, srs, avoidEdges, abspath)
-    
-    
+    cc = prepare_map_string(cc, tabpp, scale, srs, avoidEdges)
+    basepath = get_basepath(fn, abspath)
+        
     _mapnik.load_map_string(mp,"\n".join(cc),False,basepath)
 
     
@@ -106,6 +115,6 @@ def load_mapnik_carto(fn, tabpp = None, scale=None, srs=None, mp=None, avoidEdge
         mp.srs=srs
 
     
-    open(convfn,'w').write(_mapnik.save_map_to_string(mp))
+    #open(convfn,'w').write(_mapnik.save_map_to_string(mp))
 
     return mp

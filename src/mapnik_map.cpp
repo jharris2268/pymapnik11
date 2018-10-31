@@ -80,7 +80,18 @@ void export_map(py::module& m) {
         .def_property("miny", &box2d::miny, &box2d::set_miny)
         .def_property("maxx", &box2d::maxx, &box2d::set_maxx)
         .def_property("maxy", &box2d::maxy, &box2d::set_maxy)
-        .def_property_readonly("tuple", [](const box2d bx) { return py::make_tuple(bx.minx(),bx.miny(),bx.maxx(),bx.maxy()); })
+        //.def_property_readonly("tuple", [](const box2d bx) { return py::make_tuple(bx.minx(),bx.miny(),bx.maxx(),bx.maxy()); })
+        .def("__getitem__", [](const box2d& bx, int i)->double {
+            if (i<0) { i+=4; }
+            if (i==0) { return bx.minx(); }
+            if (i==1) { return bx.miny(); }
+            if (i==2) { return bx.maxx(); }
+            if (i==3) { return bx.maxy(); }
+            throw py::index_error();
+            return 0;
+        })
+        .def("__len__", [](const box2d& bx) { return 4; })
+        
         .def("width", [](const box2d& bx) { return bx.width();})
         .def("height", [](const box2d& bx) { return bx.height();})
         .def("center", [](const box2d& bx) {
@@ -156,3 +167,4 @@ void export_map(py::module& m) {
     m.def("register_datasource_path", &register_datasource_path, py::arg("path")="/usr/local/lib/mapnik/input");
     
 }
+
