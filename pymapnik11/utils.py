@@ -51,9 +51,13 @@ def transform(trans, *args):
         c,d = trans(args[2],args[3])
         return [a,b,c,d]
     
-    if len(args)==1 and hasattr(args[0], 'tuple'):
-        return _mapnik.box2d(*transform(trans, *args[0].tuple))
-        
+    #if len(args)==1 and hasattr(args[0], 'tuple'):
+    if len(args)==1 and isinstance(args[0], _mapnik.box2d):
+        return _mapnik.box2d(*transform(trans, *list(args[0])))
+    
+    if len(args)==1 and len(args[0]) in (2,4):
+        return transform(trans, *args[0])
+            
     raise Exception("can't handle input values %s" % str(args))
 
 forward = lambda *args: transform(trans_forward, *args)
