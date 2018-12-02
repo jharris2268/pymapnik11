@@ -103,7 +103,15 @@ def tile_bound(x, y, z, nx=1, ny=None):
     
     return _mapnik.box2d(mx,my,Mx,My)
 
-def coord_to_tile(x, y, z):
+def coord_to_tile(*args):
+    x,y,z=None,None,None
+    if len(args)==1:
+        x,y,z=args[0]
+    elif len(args)==2:
+        x,y = args[0]
+        z=args[1]
+    else:
+        x,y,z=args
     ts = zoom(z)*256
     xt = (x + earth_width/2) / ts
     yt = (earth_width/2 - y) / ts
