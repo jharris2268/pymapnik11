@@ -25,10 +25,11 @@
 #include <mapnik/layer.hpp>
 #include <mapnik/load_map.hpp>
 #include <mapnik/save_map.hpp>
-
+#include <mapnik/label_collision_detector.hpp>
 #include <mapnik/geometry/box2d.hpp>
 #include <mapnik/image.hpp>
 #include <mapnik/agg_renderer.hpp>
+#include <mapnik/timer.hpp>
 
 #include <mapnik/util/singleton.hpp>
 #include <mapnik/font_engine_freetype.hpp>
@@ -48,6 +49,65 @@ py::bytes render_image(Map_ptr mp, double scale_factor, unsigned offset_x, unsig
     
     return py::bytes(reinterpret_cast<const char*>(im.bytes()), sz);
 }
+
+
+void set_all_layers(Map_ptr mp, bool which) {
+    for (size_t i=0; i < mp->layer_count(); i++) {
+        mp->get_layer(i).set_active(which);
+    }
+}
+
+py::list render_image_split(Map_ptr mp, std::vector<std::pair<std::string,std::vector<size_t>>> parts, double scale_factor, unsigned offset_x, unsigned offset_y, mapnik::color alt_background) {
+    if (!mp) { throw std::domain_error("null map"); }
+    if (parts.empty()) { throw std::domain_error("no parts"); }
+    
+    py::gil_scoped_release release;
+    
+    py::list result;
+    
+    auto detector = std::make_shared<mapnik::agg_renderer<mapnik::image_rgba8>::detector_type>(
+            mapnik::box2d<double>(-mp->buffer_size(), -mp->buffer_size(), mp->width() + mp->buffer_size() , mp->height() + mp->buffer_size()));
+    
+    auto background = mp->background();    
+    bool first=true;
+    size_t sz = mp->width()*mp->height()*4;
+    
+    mapnik::timer tm;
+    for (const auto& pp: parts) {
+        tm.restart();
+        
+        mapnik::image_rgba8 im(mp->width(), mp->height());
+        
+        
+        set_all_layers(mp, false);
+        if (!first) {
+            mp->set_background(alt_background);
+        }
+        
+        for (const auto& l: pp.second) {
+            mp->get_layer(l).set_active(true);
+        }
+        
+        mapnik::agg_renderer<mapnik::image_rgba8> ren(*mp,im,detector,scale_factor,offset_x, offset_y);
+        ren.apply();
+        first=false;
+
+        result.append(py::make_tuple(
+            py::cast(pp.first),
+            py::cast(tm.wall_clock_elapsed()/1000.0),
+            py::bytes(reinterpret_cast<const char*>(im.bytes()), sz)
+        ));
+    }
+    set_all_layers(mp, true);
+    if (background) {
+        mp->set_background(*background);
+    }
+    
+    return result;
+}
+    
+    
+    
 
 bool register_font(const std::string& path) {
     return mapnik::singleton<mapnik::freetype_engine,mapnik::CreateStatic>::instance().register_font(path);
@@ -159,7 +219,11 @@ void export_map(py::module& m) {
     
     
     m.def("render_image", &render_image, py::arg("mp"), py::arg("scale_factor")=1.0, py::arg("offset_x")=0, py::arg("offset_y")=0);
-    
+    m.def("render_image_split", &render_image_split, 
+        py::arg("mp"), py::arg("parts"),
+        py::arg("scale_factor")=1.0, py::arg("offset_x")=0, py::arg("offset_y")=0,
+        py::arg("alt_background")=mapnik::color(255,255,255,0));
+
     m.def("register_font", &register_font);
     m.def("register_font_path", &register_font_path, py::arg("path")="/usr/local/lib/mapnik/fonts");
     m.def("face_names", &face_names);

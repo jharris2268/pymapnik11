@@ -167,9 +167,24 @@ def render_demo_tile(mp, x, y, z, lab='orig', buffer=.75, border=True, scale_fac
     
     return im
 
+def render_demo_tile_parts(mp, x, y, z, lab, parts, buffer=.75, border=True, scale_factor=None,merge=True):
+    
+    bounds = tile_bound(x-buffer, y-buffer, z, 1+2*buffer)
+    im_sz = int(floor(256*(1+2*buffer))+.1)
+    t,im_parts=time_op(render_image,mp, bounds, im_sz, scale_factor=scale_factor,parts=parts)
+    if merge:
+        im_parts=merge_image_parts(im_parts)
+       
+    
+    for a,b,c in im_parts:
+        add_label(c, "%d %d %d %s %s: %0.1fs" % (x,y,z,lab,a,b))
+        draw_rectangle(c, [buffer*256, buffer*256, 256+buffer*256, 256+buffer*256])
+        
+    return im_parts
 
 
-def render_image(mp, box=None, width=None, height=None, scale=None, scale_factor=None):
+
+def render_image(mp, box=None, width=None, height=None, scale=None, parts=None, scale_factor=None):
     
     if scale is not None:
         if box is None:
@@ -199,11 +214,47 @@ def render_image(mp, box=None, width=None, height=None, scale=None, scale_factor
     kw={}
     if scale_factor is not None:
         kw['scale_factor']=scale_factor
+    if not parts is None:
+        aa = _mapnik.render_image_split(mp, parts, **kw)
+        if Pi is None:
+            return aa
+        return [(a,b,Pi.frombytes('RGBA', (mp.width,mp.height), c)) for a,b,c in aa]
+        
     aa = _mapnik.render_image(mp,**kw)
     if Pi is None:
         return aa
     return Pi.frombytes('RGBA', (mp.width,mp.height), aa)
     
+def merge_images(ims):
+    if not ims:
+        return None
+    if len(ims)==1:
+        return ims[0]
+    
+    
+    bottom = ims[0]
+    top = merge_images(ims[1:])
+    
+    if top is None:
+        return top
+    if bottom is None:
+        bottom = Pi.new('RGBA',(top.width, top.height), 'white')
+    
+    return Pi.alpha_composite(bottom, top)
+        
+def merge_image_parts(image_parts):
+    tt={}
+    order=[]
+    
+    for a,b,c in image_parts:
+        if not a in tt:
+            order.append(a)
+            tt[a]=[0,[]]
+        tt[a][0]+=b
+        tt[a][1].append(c)
+    
+    return [(o, tt[o][0], merge_images(tt[o][1])) for o in order]
+        
 
 default_num_tiles = dict((z,1 if z<6 else 2 if z<10 else 4 if z<13 else 8) for z in xrange(19))
 

@@ -34,17 +34,21 @@ except:
 
 
 def box2d_repr(box):
-    return "box2d(%0.1f %0.1f %0.1f %0.1f)" % (box.minx, box.miny, box.maxx, box.maxy)
+    return "box2d(%0.1f, %0.1f, %0.1f, %0.1f)" % (box.minx, box.miny, box.maxx, box.maxy)
 
 def box2d_area(box):
     return (box.maxx-box.minx)*(box.maxy-box.miny)
 
 def box2d_intersection(left, right):
-    return _mapnik.box2d(
+    ans= _mapnik.box2d(
         max(left.minx, right.minx),
         max(left.miny, right.miny),
         min(left.maxx, right.maxx),
         min(left.maxy, right.maxy))
+    
+    if ans.minx>ans.maxx or ans.miny>ans.maxy:
+        return None
+    return ans
 
 _mapnik.box2d.__repr__ = box2d_repr
 _mapnik.box2d.area = property(box2d_area)
