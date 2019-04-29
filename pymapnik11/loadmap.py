@@ -49,7 +49,7 @@ def call_carto(fn):
         fn = convfn            
 
 
-    cc=[l for l in subprocess.check_output(['carto','-q',fn]).split("\n") if not l.startswith('[millstone')]
+    cc=[l for l in subprocess.check_output(['carto','-q',fn]).decode("utf-8").split("\n") if not l.startswith('[millstone')]
     return cc
 
 
@@ -90,10 +90,10 @@ def load_mapnik_carto(fn, tabpp = None, scale=None, srs=None, mp=None, avoidEdge
     if not force and os.path.exists(convfn) and os.stat(convfn).st_mtime > os.stat(fn).st_mtime:
         #_mapnik.load_map_string(mp,open(convfn).read(), False, get_basepath(fn,abspath))
         #return mp
-        cc = [c.strip() for c in open(convfn)]
+        cc = [c.decode("utf-8").strip() for c in open(convfn)]
     else:
         cc = call_carto(fn)
-        open(convfn,'w').write("\n".join(cc))
+        open(convfn,'w').write(("\n".join(cc)).encode('utf-8'))
         
 
     cc = prepare_map_string(cc, tabpp, scale, srs, avoidEdges)

@@ -20,7 +20,7 @@
 #
 #-----------------------------------------------------------------------
 
-
+from . import _mapnik 
 from ._mapnik import *
 from .styles import *
 from .loadmap import load_mapnik_carto

@@ -21,6 +21,9 @@
 #-----------------------------------------------------------------------
 
 from __future__ import unicode_literals, print_function
+
+from builtins import range
+
 import pyproj    
 from . import _mapnik
 import time
@@ -256,7 +259,7 @@ def merge_image_parts(image_parts):
     return [(o, tt[o][0], merge_images(tt[o][1])) for o in order]
         
 
-default_num_tiles = dict((z,1 if z<6 else 2 if z<10 else 4 if z<13 else 8) for z in xrange(19))
+default_num_tiles = dict((z,1 if z<6 else 2 if z<10 else 4 if z<13 else 8) for z in range(19))
 
 def tile_extent_zoom(x,y,z, zl):
     sf = 2.**(zl-z)
@@ -291,8 +294,8 @@ class Tiles:
         yy = (y//nt) * nt
         im, tsz = self.render_tile_image(xx,yy,z,nt)
         
-        for i in xrange(nt):
-            for j in xrange(nt):
+        for i in range(nt):
+            for j in range(nt):
                 imc=im.crop([tsz*i, tsz*j, tsz*(i+1), tsz*(j+1)])
                 imc.load()
                 yield xx+i, yy+j, imc
@@ -330,8 +333,8 @@ class Tiles:
         im = Pi.new('RGBA', (im_sz,im_sz), 'white')
         bi=int(ceil(buffer))
         cx,cy = im_sz//2-128, im_sz/2-128
-        for xi in xrange(-bi, bi+1):
-            for yi in xrange(-bi, bi+1):
+        for xi in range(-bi, bi+1):
+            for yi in range(-bi, bi+1):
                 t=self(xi+x,yi+y,z)
                 im.paste(t, [cx+xi*256, cy+yi*256])
                 
