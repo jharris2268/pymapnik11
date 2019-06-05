@@ -77,7 +77,7 @@ class And:
     
     @property
     def json(self):
-        return {'type':'And', 'Left': self.l.json, 'Right': self.r.json}
+        return {'name':'And', 'Left': self.l.json, 'Right': self.r.json}
 
     @property
     def keys(self):
@@ -113,7 +113,7 @@ class Or:
     
     @property
     def json(self):
-        return {'type':'Or', 'Left': self.l.json, 'Right': self.r.json}
+        return {'name':'Or', 'Left': self.l.json, 'Right': self.r.json}
     
 class Op:
     def __init__(self, l, o, r):
@@ -173,7 +173,7 @@ class Op:
 
     @property
     def json(self):
-        return {'type':'Op', 'Left': self.l.json, 'Op': self.o, 'Right': self.r.json}
+        return {'name':'Op', 'Left': self.l.json, 'Op': self.o, 'Right': self.r.json}
 
 class FieldOp:
     def __init__(self, l, o, r):
@@ -224,7 +224,7 @@ class FieldOp:
     
     @property
     def json(self):
-        return {'type':'FieldOp', 'Left': self.l.json, 'Right': self.r.json, 'Op': self.o}
+        return {'name':'ColumnOp', 'Left': self.l.json, 'Right': self.r.json, 'Op': self.o}
 
 class Label:
     def __init__(self, key):
@@ -249,7 +249,7 @@ class Label:
     
     @property
     def json(self):
-        return {'type':'Label', 'Key': self.key}
+        return {'name':'Label', 'Key': self.key}
     
 
 class Value:
@@ -275,7 +275,7 @@ class Value:
     
     @property
     def json(self):
-        return {'type':'Value', 'Key': self.val}
+        return {'name':'Value', 'Value': self.val}
 
 class Visitor(PTNodeVisitor):
     def visit_number(self,n,c):
@@ -284,7 +284,8 @@ class Visitor(PTNodeVisitor):
         except:
             return Value(float(str(n)))
     def visit_strliteral(self,n,c):
-        r= str(c[0]) if c else str(n)
+        r=unicode(c[0] if c else n)
+            
         if r[0]=="'" and r[-1]=="'":
             return Value(r[1:-1])
         return Value(r)
