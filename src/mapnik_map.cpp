@@ -37,15 +37,20 @@
 
 #include <pybind11/operators.h>
     
-py::bytes render_image(Map_ptr mp, double scale_factor, unsigned offset_x, unsigned offset_y) {
+py::bytes render_image(Map_ptr mp, double scale_factor, unsigned offset_x, unsigned offset_y, std::shared_ptr<mapnik::label_collision_detector4> detector) {
     if (!mp) { throw std::domain_error("null map"); }
     py::gil_scoped_release release;
     
     mapnik::image_rgba8 im(mp->width(), mp->height());
     size_t sz = mp->width()*mp->height()*4;
     
-    mapnik::agg_renderer<mapnik::image_rgba8> ren(*mp,im,scale_factor,offset_x, offset_y);
-    ren.apply();
+    if (detector) {
+        mapnik::agg_renderer<mapnik::image_rgba8> ren(*mp,im,detector,scale_factor,offset_x, offset_y);
+        ren.apply();
+    } else {
+        mapnik::agg_renderer<mapnik::image_rgba8> ren(*mp,im,scale_factor,offset_x, offset_y);
+        ren.apply();
+    }
     
     return py::bytes(reinterpret_cast<const char*>(im.bytes()), sz);
 }
@@ -113,12 +118,16 @@ bool register_font(const std::string& path) {
     return mapnik::singleton<mapnik::freetype_engine,mapnik::CreateStatic>::instance().register_font(path);
 }
 
-bool register_font_path(const std::string& path) {
-    return mapnik::singleton<mapnik::freetype_engine,mapnik::CreateStatic>::instance().register_fonts(path);
+bool register_font_path(const std::string& path, bool recurse) {
+    return mapnik::singleton<mapnik::freetype_engine,mapnik::CreateStatic>::instance().register_fonts(path,recurse);
 }
 
 std::vector<std::string> face_names() {
     return mapnik::singleton<mapnik::freetype_engine,mapnik::CreateStatic>::instance().face_names();
+}
+
+std::map<std::string,std::pair<int,std::string>> font_file_mapping() {
+    return mapnik::singleton<mapnik::freetype_engine,mapnik::CreateStatic>::instance().get_mapping();
 }
 
 bool register_datasource(const std::string& path) {
@@ -127,6 +136,16 @@ bool register_datasource(const std::string& path) {
 bool register_datasource_path(const std::string& path) {
     return mapnik::singleton<mapnik::datasource_cache,mapnik::CreateStatic>::instance().register_datasources(path);
 }
+
+
+std::string conv_pp(const std::unique_ptr<char[]>& xx) {
+    if (!xx) {
+        return std::string();
+    }
+    const auto& xxp= xx.get();
+    return std::string(xxp);
+}
+    
 
 void export_map(py::module& m) {
     
@@ -192,9 +211,37 @@ void export_map(py::module& m) {
         .def("scale", &mapnik::Map::scale)
         .def("scale_denominator", &mapnik::Map::scale_denominator)
         .def("zoom", &mapnik::Map::zoom)
+        .def("transform", &mapnik::Map::transform)
+        .def("buffer_size", &mapnik::Map::buffer_size)
+        //.def("load_fonts", &mapnik::Map::load_fonts)
+        .def("fontsets", [](const mapnik::Map& mp) { return mp.fontsets(); })
+        /*.def("register_fonts", [](mapnik::Map& mp, std::string dir, bool rec) { return mp.register_fonts(dir,rec); }, py::arg("dir"),py::arg("rec")=false)
+        .def("get_font_file_mapping", [](const mapnik::Map& mp) { return mp.get_font_file_mapping(); })
+        .def("get_font_memory_cache", [](const mapnik::Map& mp) {
+            std::map<std::string, std::pair<std::string, std::size_t>> res;
+            for (const auto& m: mp.get_font_memory_cache()) {
+                res[m.first] = std::make_pair(conv_pp(m.second.first), m.second.second);
+            }
+            return res;
+        })*/
     ;
     
     
+    py::class_<mapnik::view_transform>(m,"view_transform")
+        .def("forward", [](const mapnik::view_transform& vt, mapnik::box2d<double> bx) {
+            return vt.forward(bx); })
+        .def("backward", [](const mapnik::view_transform& vt, mapnik::box2d<double> bx) {
+            return vt.backward(bx); })
+        .def("forward", [](const mapnik::view_transform& vt, double x, double y) {
+            vt.forward(&x,&y);
+            return std::make_pair(x,y);
+        })
+        .def("backward", [](const mapnik::view_transform& vt, double x, double y) {
+            vt.backward(&x,&y);
+            return std::make_pair(x,y);
+        })
+    ;
+            
     py::class_<mapnik::color>(m, "color")
         .def(py::init<std::uint8_t,std::uint8_t,std::uint8_t,std::uint8_t>())
         .def(py::init<std::uint32_t>())
@@ -218,17 +265,22 @@ void export_map(py::module& m) {
         py::arg("mp"), py::arg("explicit_defaults")=false);
     
     
-    m.def("render_image", &render_image, py::arg("mp"), py::arg("scale_factor")=1.0, py::arg("offset_x")=0, py::arg("offset_y")=0);
+    m.def("render_image", &render_image, py::arg("mp"), py::arg("scale_factor")=1.0, py::arg("offset_x")=0, py::arg("offset_y")=0, py::arg("detector")=nullptr);
     m.def("render_image_split", &render_image_split, 
         py::arg("mp"), py::arg("parts"),
         py::arg("scale_factor")=1.0, py::arg("offset_x")=0, py::arg("offset_y")=0,
         py::arg("alt_background")=mapnik::color(255,255,255,0));
 
     m.def("register_font", &register_font);
-    m.def("register_font_path", &register_font_path, py::arg("path")="/usr/local/lib/mapnik/fonts");
+    m.def("register_font_path", &register_font_path, py::arg("path")="/usr/local/lib/mapnik/fonts", py::arg("recurse")=false);
     m.def("face_names", &face_names);
+    m.def("font_file_mapping", &font_file_mapping);
     m.def("register_datasource", &register_datasource);
     m.def("register_datasource_path", &register_datasource_path, py::arg("path")="/usr/local/lib/mapnik/input");
     
+    py::class_<mapnik::font_set>(m,"font_set")
+        .def_property_readonly("name", &mapnik::font_set::get_name)
+        .def_property_readonly("face_names", &mapnik::font_set::get_face_names)
+    ;
 }
 

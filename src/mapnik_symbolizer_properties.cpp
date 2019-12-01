@@ -39,8 +39,9 @@
 
 #include <mapnik/text/placements/base.hpp>
 #include <mapnik/text/placements/simple.hpp>
-
+#include <mapnik/text/text_properties.hpp>
 #include <mapnik/text/formatting/text.hpp>
+#include <mapnik/label_collision_detector.hpp>
 
 
 py::object get_symbolizer_enum(const mapnik::keys& key, const mapnik::enumeration_wrapper& e) {
@@ -452,8 +453,35 @@ void export_symbolizer_properties(py::module& m) {
         
     py::class_<mapnik::text_placements, mapnik::text_placements_ptr>(m, "text_placements")
         .def_readonly("defaults", &mapnik::text_placements::defaults, py::return_value_policy::reference)
+        .def("get_placement_info", &mapnik::text_placements::get_placement_info, py::arg("scale_factor"), py::arg("feature"), py::arg("attrs"))
     ;
-
+    py::class_<mapnik::text_placement_info, mapnik::text_placement_info_ptr>(m,"text_placement_info")
+        .def_readonly("properties",&mapnik::text_placement_info::properties, py::return_value_policy::reference)
+        .def_readonly("scale_factor", &mapnik::text_placement_info::scale_factor)
+        .def("next", &mapnik::text_placement_info::next)
+    ;
+    
+    m.def("evaluate_text_properties", &mapnik::evaluate_text_properties);
+    
+    py::class_<mapnik::detail::evaluated_text_properties,mapnik::evaluated_text_properties_ptr>(m, "evaluated_text_properties")
+        //.def_readonly("label_placement", &mapnik::detail::evaluated_text_properties::label_placement)
+        .def_property_readonly("label_placement", [](const mapnik::detail::evaluated_text_properties& x) { return (mapnik::label_placement_enum) x.label_placement; })
+        .def_readonly("label_spacing", &mapnik::detail::evaluated_text_properties::label_spacing)
+        .def_readonly("label_position_tolerance", &mapnik::detail::evaluated_text_properties::label_position_tolerance)
+        .def_readonly("avoid_edges", &mapnik::detail::evaluated_text_properties::avoid_edges)
+        .def_readonly("margin", &mapnik::detail::evaluated_text_properties::margin)
+        .def_readonly("repeat_distance", &mapnik::detail::evaluated_text_properties::repeat_distance)
+        .def_readonly("minimum_distance", &mapnik::detail::evaluated_text_properties::minimum_distance)
+        .def_readonly("minimum_padding", &mapnik::detail::evaluated_text_properties::minimum_padding)
+        .def_readonly("minimum_path_length", &mapnik::detail::evaluated_text_properties::minimum_path_length)
+        .def_readonly("max_char_angle_delta", &mapnik::detail::evaluated_text_properties::max_char_angle_delta)
+        .def_readonly("allow_overlap", &mapnik::detail::evaluated_text_properties::allow_overlap)
+        .def_readonly("largest_bbox_only", &mapnik::detail::evaluated_text_properties::largest_bbox_only)
+        //.def_readonly("upright", &mapnik::detail::evaluated_text_properties::upright)
+        .def_property_readonly("upright", [](const mapnik::detail::evaluated_text_properties& x) { return (mapnik::text_upright_enum) x.upright; })
+        .def_readonly("grid_cell_width", &mapnik::detail::evaluated_text_properties::grid_cell_width)
+        .def_readonly("grid_cell_height", &mapnik::detail::evaluated_text_properties::grid_cell_height)
+    ;
     py::class_<mapnik::font_feature_settings>(m, "font_feature_settings")
         .def("to_string", &mapnik::font_feature_settings::to_string)
     ;

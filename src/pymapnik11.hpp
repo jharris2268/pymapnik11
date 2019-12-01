@@ -49,4 +49,5 @@ void export_style(py::module& m);
 void export_datasource(py::module& m);
 void export_feature(py::module& m);
 void export_symbolizer_properties(py::module& m);
+void export_text(py::module& m);
 #endif

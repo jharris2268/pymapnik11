@@ -378,3 +378,29 @@ def render_demo_tile_project(mp, x, y, z,lab=''):
     imd.line(bxpts3, fill='blue',width=2)
     return im
 
+def prep_feat(tp,props):
+    ctx=_mapnik.context()
+    for p in props:
+        ctx.push(p)
+    feat=_mapnik.feature(ctx,1)
+    for p in props:
+        feat[p]=props[p]
+    tpi = tp.get_placement_info(1,feat,{})
+    return feat, tpi
+    
+def get_text_layout(tp, props):
+    feat,tpi = prep_feat(tp,props)
+    return _mapnik.make_text_layout(feat,{},1,tpi)
+
+def get_placement_point(tp, props, cx, cy, dd):
+    feat,tpi = prep_feat(tp,props)
+    return _mapnik.find_placements_point(feat, cx, cy, {}, dd, dd.extent(), tpi, 1)
+
+def get_placement_line(tp, props, pts, dd):
+    feat,tpi = prep_feat(tp,props)
+    return _mapnik.find_placements_line(feat, pts, {}, dd, dd.extent(), tpi, 1)
+
+    
+    
+    mk.find_placements_point(feat, cx, cy, {}, dd, mk.box2d(0,0,640,640), tpi, 1)
+

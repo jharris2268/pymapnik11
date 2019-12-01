@@ -85,6 +85,8 @@ _mapnik.feature.set_wkb = lambda f,w: set_feature_wkb(f,w)
 
 expression = _mapnik.make_expression
 
+register_font_path('/usr/share/fonts',True)
 register_font_path()
+
 register_datasource_path()
 

@@ -21,6 +21,7 @@
 #-----------------------------------------------------------------------
 
 from __future__ import unicode_literals, print_function
+import io
 from . import _mapnik
 import subprocess, os.path, json
 
@@ -38,14 +39,14 @@ def get_basepath(fn, abspath):
     return a
     
 def call_carto(fn):
-    if open(fn).read(6)=='scale:':
+    if io.open(fn).read(6)=='scale:':
 
         convfn=os.path.splitext(fn)[0]+"-conv.mml"
         if not os.path.exists(convfn) or os.stat(convfn).st_mtime < os.stat(fn).st_mtime:
             if yaml is None:
                 raise Exception("need pyyaml to convert yaml file to json format [call pip install --user pyyaml]")
-            src = yaml.load(open(fn))
-            json.dump(src, open(convfn,'w'))
+            src = yaml.load(io.open(fn))
+            json.dump(src, io.open(convfn,'w'))
         fn = convfn            
 
 
@@ -90,10 +91,10 @@ def load_mapnik_carto(fn, tabpp = None, scale=None, srs=None, mp=None, avoidEdge
     if not force and os.path.exists(convfn) and os.stat(convfn).st_mtime > os.stat(fn).st_mtime:
         #_mapnik.load_map_string(mp,open(convfn).read(), False, get_basepath(fn,abspath))
         #return mp
-        cc = [c.decode("utf-8").strip() for c in open(convfn)]
+        cc = [c.strip() for c in io.open(convfn,encoding='utf-8')]
     else:
         cc = call_carto(fn)
-        open(convfn,'w').write(("\n".join(cc)).encode('utf-8'))
+        io.open(convfn,'w',encoding='utf-8').write("\n".join(cc))#.encode('utf-8'))
         
 
     cc = prepare_map_string(cc, tabpp, scale, srs, avoidEdges)

@@ -25,7 +25,7 @@ import itertools, collections
 
 from arpeggio import *
 from arpeggio import RegExMatch as _
-
+import six
 
 class IKwd(StrMatch):
     """
@@ -42,19 +42,22 @@ def number():       return _(r'\-?(\d+\.\d*|\d+)')
 def strliteral():   return _(r'\'(?:[^\']|\'\')*\'')
 def label():        return "[",_(r'[a-z|A-Z][a-z|A-Z|0-9|_|\-|/|:]*'),"]"
 def null():         return IKwd("null")
-def cmp_operator():     return map(StrMatch, ["!=","<=", ">=","<",">","=","~="])
-def field_operator(): return map(StrMatch, ["*","-","+","/"])
+def cmp_operator():     return [StrMatch(x) for x in ("!=","<=", ">=","<",">","=","~=")]
+def field_operator(): return [StrMatch(x) for x in ("*","-","+","/")]
 
 def field():        return [number, strliteral, label, null, field_operation, true]
 def field_operation(): return "(", field, field_operator, field, ")"
 def operation_clause(): return "(", field, cmp_operator, field, ")"
 def and_clause():   return "(", clause, IKwd("and"), clause, ")"
+def and_clause2():   return "(", clause, IKwd("and"), clause, IKwd("and"), clause, ")"
+def and_clause3():   return "(", clause, IKwd("and"), clause, IKwd("and"), clause, IKwd("and"), clause, ")"
+def and_clause4():   return "(", clause, IKwd("and"), clause, IKwd("and"), clause, IKwd("and"), clause, IKwd("and"), clause, ")"
 def or_clause():   return "(", clause, IKwd("or"), clause, ")"
 def dotmatch_clause():  return field, IKwd(".match"), "(", field, ")"
 
-def clause():       return [operation_clause, and_clause, or_clause, dotmatch_clause]
+def clause():       return [operation_clause, and_clause, and_clause2, and_clause3, and_clause4, or_clause, dotmatch_clause]
 
-def mapnikfilter(): return [field, clause]
+def mapnikfilter(): return [clause,field]
 
 
 
@@ -284,7 +287,11 @@ class Visitor(PTNodeVisitor):
         except:
             return Value(float(str(n)))
     def visit_strliteral(self,n,c):
-        r=unicode(c[0] if c else n)
+        
+        
+        r=str(c[0] if c else n)
+        if six.PY2:
+            r=unicode(c[0] if c else n)
             
         if r[0]=="'" and r[-1]=="'":
             return Value(r[1:-1])
@@ -307,6 +314,15 @@ class Visitor(PTNodeVisitor):
 
     def visit_and_clause(self, n, c):
         return And(c[0], c[1])
+    
+    def visit_and_clause2(self, n, c):
+        return And(And(c[0], c[1]), c[2])
+    
+    def visit_and_clause3(self, n, c):
+        return And(And(And(c[0], c[1]), c[2]),c[3])
+    
+    def visit_and_clause4(self, n, c):
+        return And(And(And(And(c[0], c[1]), c[2]),c[3]),c[4])
 
     def visit_or_clause(self, n, c):
         return Or(c[0], c[1])
@@ -320,5 +336,8 @@ class Visitor(PTNodeVisitor):
     def visit_mapnikfilter(self, n, c):
         return c[0]
 
-parser = ParserPython(mapnikfilter)
-proc = lambda qu: visit_parse_tree(parser.parse(qu), Visitor())
+parser_filter = ParserPython(clause)
+proc_filter = lambda qu: visit_parse_tree(parser_filter.parse(qu), Visitor())
+
+parser_field = ParserPython(field)
+proc_field = lambda qu: visit_parse_tree(parser_field.parse(qu), Visitor())

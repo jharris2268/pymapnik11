@@ -118,5 +118,6 @@ PYBIND11_PLUGIN(_mapnik) {
     export_datasource(m);
     export_feature(m);
     export_symbolizer_properties(m);
+    export_text(m);
     return m.ptr();
 };

@@ -23,6 +23,7 @@ srcs=['src/'+f for f in (
     "mapnik_datasource.cpp",
     "mapnik_feature.cpp",
     "mapnik_symbolizer_properties.cpp",
+    "mapnik_text.cpp",
 )]
 
 from distutils.command.build_ext import build_ext
