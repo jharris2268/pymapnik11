@@ -35,8 +35,8 @@ except:
     from cStringIO import StringIO as BytesIO
 
 
-p4326 = pyproj.Proj('+init=epsg:4326')
-p3857 = pyproj.Proj('+init=epsg:3857')
+p4326 = pyproj.Proj('epsg:4326')
+p3857 = pyproj.Proj('epsg:3857')
 trans_forward = lambda x,y: pyproj.transform(p4326,p3857, x, y)
 trans_backward = lambda x,y: pyproj.transform(p3857, p4326,x, y)
 earth_width = 40075016.6856

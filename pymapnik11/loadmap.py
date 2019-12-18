@@ -45,7 +45,8 @@ def call_carto(fn):
         if not os.path.exists(convfn) or os.stat(convfn).st_mtime < os.stat(fn).st_mtime:
             if yaml is None:
                 raise Exception("need pyyaml to convert yaml file to json format [call pip install --user pyyaml]")
-            src = yaml.load(io.open(fn))
+                
+            src = yaml.load(io.open(fn),Loader=yaml.SafeLoader)
             json.dump(src, io.open(convfn,'w'))
         fn = convfn            
 

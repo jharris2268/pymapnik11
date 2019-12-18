@@ -1,6 +1,7 @@
 from distutils.core import setup, Extension
 #import setuptools
 import shutil, os.path, subprocess
+import pybind11
 
 def call_pkgconfig(args):
     try:
@@ -44,6 +45,7 @@ ext_modules = [
         srcs,
         include_dirs=[
             '/usr/local/include',
+            pybind11.get_include(),
             
         ],
         extra_link_args=libs,

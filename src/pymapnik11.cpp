@@ -108,9 +108,9 @@ mapnik::attributes dict2attr(py::dict d) {
     
 
 
-PYBIND11_PLUGIN(_mapnik) {
+PYBIND11_MODULE(_mapnik, m) {
     
-    py::module m("_mapnik", "alternative mapnik bindings");
+    m.doc() = "alternative mapnik bindings";
 
     export_map(m);
     export_layer(m);
@@ -119,5 +119,5 @@ PYBIND11_PLUGIN(_mapnik) {
     export_feature(m);
     export_symbolizer_properties(m);
     export_text(m);
-    return m.ptr();
+    
 };
