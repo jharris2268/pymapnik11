@@ -37,8 +37,12 @@ except:
 
 p4326 = pyproj.Proj('epsg:4326')
 p3857 = pyproj.Proj('epsg:3857')
-trans_forward = lambda x,y: pyproj.transform(p4326,p3857, x, y,always_xy=True)
-trans_backward = lambda x,y: pyproj.transform(p3857, p4326,x, y,always_xy=True)
+transformer_forward = pyproj.Transformer.from_proj(p4326,p3857,always_xy=True)
+trans_forward = lambda x,y: transformer_forward.transform(x,y)
+
+transformer_backward = pyproj.Transformer.from_proj(p3857,p4326,always_xy=True)
+trans_backward = lambda x,y: transformer_backward.transform(x,y)
+
 earth_width = 40075016.6856
 zoom = lambda z: earth_width / 256 / (2**z)
 
