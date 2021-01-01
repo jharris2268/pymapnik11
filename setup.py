@@ -13,6 +13,8 @@ def call_pkgconfig(args):
 
 libs = call_pkgconfig('mapnik-config --libs')
 cflags = call_pkgconfig('mapnik-config --cflags')
+if '-Wshadow' in cflags:
+    cflags.remove('-Wshadow')
 
 #libs.append('-lboost_thread')
 
@@ -33,10 +35,12 @@ from distutils.sysconfig import customize_compiler
 class my_build_ext(build_ext):
     def build_extensions(self):
         customize_compiler(self.compiler)
-        try:
-            self.compiler.compiler_so.remove("-Wstrict-prototypes")
-        except (AttributeError, ValueError):
-            pass
+        for x in ("-Wshadow","-Wstrict-prototypes"):
+            try:
+                self.compiler.compiler_so.remove(x)
+            
+            except (AttributeError, ValueError):
+                pass
         build_ext.build_extensions(self)
 
 ext_modules = [

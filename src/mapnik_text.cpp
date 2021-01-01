@@ -23,6 +23,7 @@
 #include "pymapnik11.hpp"
 #include <pybind11/pytypes.h>
 #include <mapnik/feature.hpp>
+#include <math.h>
 
 #include <mapnik/text/placement_finder.hpp>
 #include <mapnik/text/placement_finder_impl.hpp>
@@ -36,7 +37,7 @@ py::tuple read_glyph_position(const mapnik::glyph_positions& gp) {
     auto c=gp.marker_pos();
     py::list d;
     for (const auto& g: gp) {
-        d.append(py::make_tuple(g.glyph.glyph_index, g.pos, g.rot.angle()));
+        d.append(py::make_tuple(g.glyph.glyph_index, g.pos, asin(g.rot.sin)));
     }
     return py::make_tuple(a,b,c,d);
 }
@@ -206,7 +207,7 @@ void export_text(py::module& m) {
     py::class_<mapnik::glyph_position>(m,"glyph_position")
         .def_property_readonly("glyph_index",[](const mapnik::glyph_position& gp) { return gp.glyph.glyph_index; })
         .def_readonly("pos", &mapnik::glyph_position::pos)
-        .def_property_readonly("rot", [](const mapnik::glyph_position& gp) { return gp.rot.angle(); })
+        .def_property_readonly("rot", [](const mapnik::glyph_position& gp) { return asin(gp.rot.sin); })
     ;
     
     py::class_<mapnik::glyph_positions>(m,"glyph_positions")
@@ -223,7 +224,7 @@ void export_text(py::module& m) {
         , py::arg("extent"), py::arg("placement_info"), /*py::arg("ffm"),*/ py::arg("scale_factor"));
         
     py::class_<tl_cont, std::shared_ptr<tl_cont>>(m,"text_layout")
-        .def_property_readonly("orientation", [](const tl_cont& tl) { return tl.tl->orientation().angle(); })
+        .def_property_readonly("orientation", [](const tl_cont& tl) { return asin(tl.tl->orientation().sin); })
         .def_property_readonly("displacement", [](const tl_cont& tl) { return tl.tl->displacement(); })
         .def_property_readonly("bounds", [](const tl_cont& tl) { return tl.tl->bounds(); })
         .def_property_readonly("horizontal_alignment", [](const tl_cont& tl) { return py::cast(mapnik::horizontal_alignment_enum(tl.tl->horizontal_alignment())); })

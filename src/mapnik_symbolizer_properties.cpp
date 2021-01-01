@@ -58,13 +58,16 @@ py::object get_symbolizer_enum(const mapnik::keys& key, const mapnik::enumeratio
         case mapnik::keys::markers_multipolicy: return py::cast(mapnik::marker_multi_policy_enum(e.value));
         case mapnik::keys::text_transform: return py::cast(mapnik::text_transform_enum(e.value));
         case mapnik::keys::label_placement: return py::cast(mapnik::label_placement_enum(e.value));
-               
+        
         case mapnik::keys::vertical_alignment: return py::cast(mapnik::vertical_alignment_enum(e.value));
         case mapnik::keys::horizontal_alignment: return py::cast(mapnik::horizontal_alignment_enum(e.value));
         case mapnik::keys::justify_alignment: return py::cast(mapnik::justify_alignment_enum(e.value));
         case mapnik::keys::upright: return py::cast(mapnik::text_upright_enum(e.value));
         case mapnik::keys::direction: return py::cast(mapnik::direction_enum(e.value));
         case mapnik::keys::stroke_gamma_method: return py::cast(mapnik::gamma_method_enum(e.value)); 
+        
+        case mapnik::keys::simplify_algorithm: return py::cast(mapnik::simplify_algorithm_e(e.value));
+        
         default:
             std::string kn = std::get<0>(mapnik::get_meta(key));
             throw std::domain_error(kn+std::string(" not a recognised enumeration type??"));
@@ -384,7 +387,16 @@ void export_symbolizer_properties(py::module& m) {
         .value("GAMMA_MULTIPLY", mapnik::GAMMA_MULTIPLY)
         .export_values()
     ;
-       
+    py::enum_<mapnik::simplify_algorithm_e>(m,"simplify_algorithm_e")
+		.value("radial_distance", mapnik::radial_distance)
+		.value("douglas_peucker", mapnik::douglas_peucker)
+		.value("visvalingam_whyatt", mapnik::visvalingam_whyatt)
+		.value("zhao_saalfeld", mapnik::zhao_saalfeld)
+		.export_values()
+	;
+
+      
+      
     m.def("string_to_key", &mapnik::get_key);
     m.def("key_to_string", [](const mapnik::keys& k) { auto meta = mapnik::get_meta(k); return py::str(std::get<0>(meta)); });
     

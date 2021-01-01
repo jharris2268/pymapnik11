@@ -26,7 +26,7 @@
 #include <mapnik/load_map.hpp>
 #include <mapnik/save_map.hpp>
 #include <mapnik/label_collision_detector.hpp>
-#include <mapnik/geometry/box2d.hpp>
+#include <mapnik/box2d.hpp>
 #include <mapnik/image.hpp>
 #include <mapnik/agg_renderer.hpp>
 #include <mapnik/timer.hpp>

@@ -22,7 +22,7 @@
 
 from __future__ import unicode_literals, print_function
 from . import _mapnik
-import utils
+from . import utils
 
 def iter_map_styles(stys):
     for k in stys.keys():
@@ -45,7 +45,7 @@ class rules:
         return self.style.rules_getitem(i)
     
     def __iter__(self):
-        for i in xrange(len(self)):
+        for i in range(len(self)):
             yield self[i]
     
     def add(self):
@@ -78,7 +78,7 @@ class symbolizers:
         return self.rule.symbolizers_getitem(i)
     
     def __iter__(self):
-        for i in xrange(len(self)):
+        for i in range(len(self)):
             yield self[i]
 
 _mapnik.rule_wrap.symbolizers = property(lambda rl: symbolizers(rl))
