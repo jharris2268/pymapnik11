@@ -355,7 +355,8 @@ def demo():
 
 def render_demo_tile_project(mp, x, y, z,lab=''):
     bx=tile_bound(x,y,z)
-    forward = lambda xx,yy: pyproj.transform(p3857, pyproj.Proj(mp.srs), xx, yy)
+    
+    forward = lambda xx,yy: pyproj.transform(p3857, pyproj.Proj(mp.srs.replace("+init=epsg:","epsg:")), xx, yy)
     bxcx, bxcy = bx.center()
     ms = merc_scale(bxcy)        
     sc = zoom(z)/ms
