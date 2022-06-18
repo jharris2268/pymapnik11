@@ -48,14 +48,15 @@ def field_operator(): return [StrMatch(x) for x in ("*","-","+","/")]
 def field():        return [number, strliteral, label, null, field_operation, true]
 def field_operation(): return "(", field, field_operator, field, ")"
 def operation_clause(): return "(", field, cmp_operator, field, ")"
-def and_clause():   return "(", clause, IKwd("and"), clause, ")"
-def and_clause2():   return "(", clause, IKwd("and"), clause, IKwd("and"), clause, ")"
-def and_clause3():   return "(", clause, IKwd("and"), clause, IKwd("and"), clause, IKwd("and"), clause, ")"
-def and_clause4():   return "(", clause, IKwd("and"), clause, IKwd("and"), clause, IKwd("and"), clause, IKwd("and"), clause, ")"
-def or_clause():   return "(", clause, IKwd("or"), clause, ")"
+
+
+
+def and_clause():   return "(", clause, OneOrMore( (IKwd("and"), clause)), ")"
+def or_clause():   return "(", clause, OneOrMore( (IKwd("or"), clause)), ")"
 def dotmatch_clause():  return field, IKwd(".match"), "(", field, ")"
 
-def clause():       return [operation_clause, and_clause, and_clause2, and_clause3, and_clause4, or_clause, dotmatch_clause]
+#def clause():       return [operation_clause, and_clause, and_clause2, and_clause3, and_clause4, or_clause, dotmatch_clause]
+def clause():       return [operation_clause, and_clause, or_clause, dotmatch_clause]
 
 def mapnikfilter(): return [clause,field]
 
@@ -280,6 +281,25 @@ class Value:
     def json(self):
         return {'name':'Value', 'Value': self.val}
 
+
+def make_and(clauses):
+    if len(clauses)<2:
+        raise Exception("??")
+    
+    if len(clauses)==2:
+        return And(clauses[0],clauses[1])
+    else:
+        return And(clauses[0], make_and(clauses[1:]))
+
+def make_or(clauses):
+    if len(clauses)<2:
+        raise Exception("??")
+    
+    if len(clauses)==2:
+        return Or(clauses[0],clauses[1])
+    else:
+        return Or(clauses[0], make_and(clauses[1:]))
+
 class Visitor(PTNodeVisitor):
     def visit_number(self,n,c):
         try:
@@ -313,19 +333,10 @@ class Visitor(PTNodeVisitor):
         return Op(c[0], c[1], c[2])
 
     def visit_and_clause(self, n, c):
-        return And(c[0], c[1])
-    
-    def visit_and_clause2(self, n, c):
-        return And(And(c[0], c[1]), c[2])
-    
-    def visit_and_clause3(self, n, c):
-        return And(And(And(c[0], c[1]), c[2]),c[3])
-    
-    def visit_and_clause4(self, n, c):
-        return And(And(And(And(c[0], c[1]), c[2]),c[3]),c[4])
-
+        return make_and(c)
+        
     def visit_or_clause(self, n, c):
-        return Or(c[0], c[1])
+        return make_or(c)
 
     def visit_dotmatch_clause(self, n, c):
         return Op(c[0], '~=', c[1])

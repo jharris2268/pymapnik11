@@ -28,6 +28,7 @@ import pyproj
 from . import _mapnik
 import time
 from math import log, floor, ceil, pi, cosh
+import urllib.request
 
 try:
     from io import BytesIO
@@ -162,21 +163,52 @@ def im_to_string(im):
     im.save(imm,'png')
     return imm.getvalue()
 
+def get_tile(src, x, y, z):
+    url = src.format(x=x,y=y,z=z)
+    headers={'User-Agent': "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:98.0) Gecko/20100101 Firefox/98.0"}
+    req = urllib.request.Request(url, headers=headers)
+    return Pi.open(urllib.request.urlopen(req))
+
+def demo_tile_from_tiles(src, x, y, z, lab='osm', buffer=0.75, border=True):
+    st=time.time()
+    
+    rt=int(ceil(buffer))
+    nt=1+2*int(ceil(buffer))
+    sz=int(ceil(256*(1+2*buffer)))
+    off = (256*nt - sz)//2
+    im=Pi.new('RGBA',(sz,sz),(0,0,0,0))
+    for ii in range(nt):
+        for jj in range(nt):
+            tt = get_tile(src, x + ii - rt, y + jj - rt, z)
+            im.paste(tt, (ii*256-off,jj*256-off))
+    
+    if not lab is None:
+        add_label(im, "%d %d %d %s: %0.1fs" % (x,y,z,lab,time.time()-st))
+    if border:
+        draw_rectangle(im, [buffer*256, buffer*256, 256+buffer*256, 256+buffer*256])
+    
+    return im
+    
+
 
 def render_demo_tile(mp, x, y, z, lab='orig', buffer=.75, border=True, scale_factor=None):
     bounds = tile_bound(x-buffer, y-buffer, z, 1+2*buffer)
     im_sz = int(floor(256*(1+2*buffer))+.1)
     t,im=time_op(render_image,mp, bounds, im_sz, scale_factor=scale_factor)
     
-    
-    add_label(im, "%d %d %d %s: %0.1fs" % (x,y,z,lab,t))
-    draw_rectangle(im, [buffer*256, buffer*256, 256+buffer*256, 256+buffer*256])
+    if not lab is None:
+        add_label(im, "%d %d %d %s: %0.1fs" % (x,y,z,lab,t))
+    if border:
+        draw_rectangle(im, [buffer*256, buffer*256, 256+buffer*256, 256+buffer*256])
     
     return im
 
+
+tile_bound_buffer = lambda x,y,z,buffer=0.75: tile_bound(x-buffer, y-buffer, z, 1+2*buffer)
+
 def render_demo_tile_parts(mp, x, y, z, lab, parts, buffer=.75, border=True, scale_factor=None,merge=True):
     
-    bounds = tile_bound(x-buffer, y-buffer, z, 1+2*buffer)
+    bounds = tile_bound_buffer(x,y,z,buffer)
     im_sz = int(floor(256*(1+2*buffer))+.1)
     t,im_parts=time_op(render_image,mp, bounds, im_sz, scale_factor=scale_factor,parts=parts)
     if merge:
@@ -184,8 +216,10 @@ def render_demo_tile_parts(mp, x, y, z, lab, parts, buffer=.75, border=True, sca
        
     
     for a,b,c in im_parts:
-        add_label(c, "%d %d %d %s %s: %0.1fs" % (x,y,z,lab,a,b))
-        draw_rectangle(c, [buffer*256, buffer*256, 256+buffer*256, 256+buffer*256])
+        if not lab is None:
+            add_label(c, "%d %d %d %s %s: %0.1fs" % (x,y,z,lab,a,b))
+        if border:
+            draw_rectangle(c, [buffer*256, buffer*256, 256+buffer*256, 256+buffer*256])
         
     return im_parts
 
@@ -353,7 +387,7 @@ def demo():
     return mp, bx, render_image(mp,bx,8*256)
 
 
-def render_demo_tile_project(mp, x, y, z,lab=''):
+def render_demo_tile_project(mp, x, y, z,lab='', sz=640):
     bx=tile_bound(x,y,z)
     
     forward = lambda xx,yy: pyproj.transform(p3857, pyproj.Proj(mp.srs.replace("+init=epsg:","epsg:")), xx, yy)
@@ -362,9 +396,9 @@ def render_demo_tile_project(mp, x, y, z,lab=''):
     sc = zoom(z)/ms
     cx, cy = forward(bxcx, bxcy)
     
-    bxff = make_box(cx, cy, z, 640/ms)
+    bxff = make_box(cx, cy, z, sz/ms)
     
-    t,im=time_op(render_image, mp, bxff, 640)
+    t,im=time_op(render_image, mp, bxff, sz)
     
     msg='zoom %2d [%5.1f] %7.1f %7.1f%s: [%5.1fs]' % (z, sc, cx, cy,' '+lab if lab else '', t)
     add_label(im, msg)
@@ -377,7 +411,7 @@ def render_demo_tile_project(mp, x, y, z,lab=''):
         [bx.minx, bxcy], [bx.minx,bx.miny]]
         
     bxpts2 = [forward(x,y) for x,y in bxpts]
-    bxpts3 = [(320+(x-cx)/sc, 320-(y-cy)/sc) for x,y in bxpts2]
+    bxpts3 = [(sz/2+(x-cx)/sc, sz/2-(y-cy)/sc) for x,y in bxpts2]
     
     imd=Pid.ImageDraw(im)
     imd.line(bxpts3, fill='blue',width=2)

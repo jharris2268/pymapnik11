@@ -31,7 +31,7 @@ try:
 except:
     Pi=None
 
-
+_mapnik.set_logger_severity(3)
 
 def box2d_repr(box):
     return "box2d(%0.1f, %0.1f, %0.1f, %0.1f)" % (box.minx, box.miny, box.maxx, box.maxy)

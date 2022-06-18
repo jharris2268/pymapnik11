@@ -23,7 +23,7 @@
 #include "pymapnik11.hpp"
 #include <pybind11/pytypes.h>
 #include <mapnik/query.hpp>
-#include <mapnik/value_types.hpp>
+#include <mapnik/value/types.hpp>
 #include <mapnik/feature.hpp>
 #include <mapnik/feature_factory.hpp>
 #include <mapnik/feature_kv_iterator.hpp>

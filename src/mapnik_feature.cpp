@@ -23,7 +23,7 @@
 #include "pymapnik11.hpp"
 #include <pybind11/pytypes.h>
 #include <mapnik/query.hpp>
-#include <mapnik/value_types.hpp>
+#include <mapnik/value/types.hpp>
 #include <mapnik/feature.hpp>
 #include <mapnik/feature_factory.hpp>
 #include <mapnik/feature_kv_iterator.hpp>
@@ -96,8 +96,10 @@ namespace intjson {
     
     py::list poly_to_py(const mapnik::geometry::polygon<double>& py) {
         py::list rings;
-        rings.append(ring_to_py(py.exterior_ring));
-        for (const auto& rr: py.interior_rings) {
+        
+                
+        //rings.append(ring_to_py(py.exterior_ring));
+        for (const auto& rr: py) {//.interior_rings) {
             rings.append(ring_to_py(rr));
         }
         /*

@@ -26,7 +26,7 @@
 #include <mapnik/load_map.hpp>
 #include <mapnik/save_map.hpp>
 #include <mapnik/label_collision_detector.hpp>
-#include <mapnik/box2d.hpp>
+#include <mapnik/geometry/box2d.hpp>
 #include <mapnik/image.hpp>
 #include <mapnik/agg_renderer.hpp>
 #include <mapnik/timer.hpp>
@@ -197,7 +197,7 @@ void export_map(py::module& m) {
     ;
         
     py::class_<mapnik::Map, Map_ptr>(m, "Map")
-        .def(py::init<int,int,std::string>(), py::arg("width"), py::arg("height"), py::arg("srs")=mapnik::MAPNIK_LONGLAT_PROJ)
+        .def(py::init<int,int,std::string>(), py::arg("width"), py::arg("height"), py::arg("srs")=mapnik::MAPNIK_GEOGRAPHIC_PROJ)
         .def_property("width", &mapnik::Map::width, &mapnik::Map::set_width)
         .def_property("height", &mapnik::Map::height, &mapnik::Map::set_height)
         .def_property("srs", &mapnik::Map::srs, &mapnik::Map::set_srs)
@@ -226,6 +226,45 @@ void export_map(py::module& m) {
         })*/
     ;
     
+    py::class_<mapnik::proj_transform>(m,"proj_transform")
+        .def(py::init<std::string,std::string>(),py::arg("source"), py::arg("dest"))
+        .def("equal", &mapnik::proj_transform::equal)
+        .def("is_known", &mapnik::proj_transform::is_known)
+        .def("definition", &mapnik::proj_transform::definition)
+        .def("forward", [](const mapnik::proj_transform& vt, mapnik::box2d<double> bx) -> py::object {
+            if (vt.forward(bx)) {
+                return py::cast(bx);
+            } else {
+                return py::none();
+            }
+        })
+        .def("backward", [](const mapnik::proj_transform& vt, mapnik::box2d<double> bx) -> py::object {
+            if (vt.backward(bx)) {
+                return py::cast(bx);
+            } else {
+                return py::none();
+            }
+            
+        })
+        .def("forward", [](const mapnik::proj_transform& vt, double x, double y) -> py::object {
+            double z=0;
+            if (vt.forward(x,y,z)) {
+                return py::cast(std::make_pair(x,y));
+            } else {
+                return py::none();
+            }
+            
+        })
+        .def("backward", [](const mapnik::proj_transform& vt, double x, double y) -> py::object {
+            double z=0;
+            if (vt.backward(x,y,z)) {
+                return py::cast(std::make_pair(x,y));
+            } else {
+                return py::none();
+            }
+            
+        })
+    ;
     
     py::class_<mapnik::view_transform>(m,"view_transform")
         .def("forward", [](const mapnik::view_transform& vt, mapnik::box2d<double> bx) {
@@ -277,6 +316,11 @@ void export_map(py::module& m) {
     m.def("font_file_mapping", &font_file_mapping);
     m.def("register_datasource", &register_datasource);
     m.def("register_datasource_path", &register_datasource_path, py::arg("path")="/usr/local/lib/mapnik/input");
+    
+    m.def("set_logger_severity", [](int s) { mapnik::logger::set_severity(static_cast<mapnik::logger::severity_type>(s)); }, py::arg("severity")=3);
+    
+    
+    
     
     py::class_<mapnik::font_set>(m,"font_set")
         .def_property_readonly("name", &mapnik::font_set::get_name)

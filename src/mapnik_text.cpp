@@ -30,6 +30,7 @@
 #include <mapnik/text/placements/base.hpp>
 #include <mapnik/label_collision_detector.hpp>
 
+/*
 py::tuple read_glyph_position(const mapnik::glyph_positions& gp) {
     
     auto a=gp.get_base_point();
@@ -42,7 +43,7 @@ py::tuple read_glyph_position(const mapnik::glyph_positions& gp) {
     return py::make_tuple(a,b,c,d);
 }
 
-/*std::vector<mapnik::glyph_positions>*/ py::list find_placements_point(
+ py::list find_placements_point(
     mapnik::feature_impl const& feature,
     double x, double y,
     mapnik::attributes const& attr,
@@ -98,7 +99,8 @@ struct line_adaptor {
 };
     
 
-/*std::vector<mapnik::glyph_positions>*/ py::list find_placements_line(
+//std::vector<mapnik::glyph_positions> find_placements_line(
+py::list find_placements_line(
     mapnik::feature_impl const& feature,
     const std::vector<std::pair<double,double>>& points,
     mapnik::attributes const& attr,
@@ -171,7 +173,7 @@ py::list text_layout_lines(std::shared_ptr<tl_cont> tl) {
     }
     return res;
 }
-        
+*/
         
     
 
@@ -196,6 +198,8 @@ void export_text(py::module& m) {
         })
         .def("extent", &mapnik::label_collision_detector4::extent)
     ;
+    
+    /*
     py::class_<mapnik::pixel_position>(m,"pixel_position")
         .def_readonly("x", &mapnik::pixel_position::x)
         .def_readonly("y", &mapnik::pixel_position::y)
@@ -219,9 +223,9 @@ void export_text(py::module& m) {
     ;
     
     m.def("find_placements_point", &find_placements_point, py::arg("feature"), py::arg("x"), py::arg("y"), py::arg("attr"), py::arg("detector")
-        , py::arg("extent"), py::arg("placement_info"), /*py::arg("ffm"),*/ py::arg("scale_factor"));
+        , py::arg("extent"), py::arg("placement_info"), /*py::arg("ffm"),*\/ py::arg("scale_factor"));
     m.def("find_placements_line", &find_placements_line, py::arg("feature"), py::arg("points"), py::arg("attr"), py::arg("detector")
-        , py::arg("extent"), py::arg("placement_info"), /*py::arg("ffm"),*/ py::arg("scale_factor"));
+        , py::arg("extent"), py::arg("placement_info"), /*py::arg("ffm"),*\/ py::arg("scale_factor"));
         
     py::class_<tl_cont, std::shared_ptr<tl_cont>>(m,"text_layout")
         .def_property_readonly("orientation", [](const tl_cont& tl) { return asin(tl.tl->orientation().sin); })
@@ -232,6 +236,6 @@ void export_text(py::module& m) {
         .def_property_readonly("lines", &text_layout_lines)
     ;
     m.def("make_text_layout", &make_text_layout);
-   
+   */
 };
 

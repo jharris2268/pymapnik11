@@ -1,5 +1,7 @@
 pymapnik11.egg-info
-pymapnik11/*.pyc
+**/*.pyc
+pymapnik11/__pycache__
+**/*.so
 old
 dist
 build

@@ -473,7 +473,7 @@ void export_symbolizer_properties(py::module& m) {
         .def("next", &mapnik::text_placement_info::next)
     ;
     
-    m.def("evaluate_text_properties", &mapnik::evaluate_text_properties);
+    //m.def("evaluate_text_properties", &mapnik::evaluate_text_properties);
     
     py::class_<mapnik::detail::evaluated_text_properties,mapnik::evaluated_text_properties_ptr>(m, "evaluated_text_properties")
         //.def_readonly("label_placement", &mapnik::detail::evaluated_text_properties::label_placement)
