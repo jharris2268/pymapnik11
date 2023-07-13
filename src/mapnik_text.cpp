@@ -223,9 +223,9 @@ void export_text(py::module& m) {
     ;
     
     m.def("find_placements_point", &find_placements_point, py::arg("feature"), py::arg("x"), py::arg("y"), py::arg("attr"), py::arg("detector")
-        , py::arg("extent"), py::arg("placement_info"), /*py::arg("ffm"),*\/ py::arg("scale_factor"));
+        , py::arg("extent"), py::arg("placement_info"), py::arg("ffm"), py::arg("scale_factor"));
     m.def("find_placements_line", &find_placements_line, py::arg("feature"), py::arg("points"), py::arg("attr"), py::arg("detector")
-        , py::arg("extent"), py::arg("placement_info"), /*py::arg("ffm"),*\/ py::arg("scale_factor"));
+        , py::arg("extent"), py::arg("placement_info"), py::arg("ffm"), py::arg("scale_factor"));
         
     py::class_<tl_cont, std::shared_ptr<tl_cont>>(m,"text_layout")
         .def_property_readonly("orientation", [](const tl_cont& tl) { return asin(tl.tl->orientation().sin); })

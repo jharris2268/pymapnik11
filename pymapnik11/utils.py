@@ -131,7 +131,8 @@ import PIL.ImageDraw as Pid
 import PIL.ImageFont as Pif
 import os
 
-def add_label(im, msg, fill='black', font='DejaVuSans.ttf', size=14,fontpath=None, background='white'):
+def add_label(im, msg, origin = (10,10), fill='black', font='DejaVuSans.ttf', size=14,fontpath=None, background='white'):
+    ox,oy = origin
     if fontpath==None:
         fontpath='/usr/share/fonts/truetype/dejavu/'
     fn = font
@@ -144,8 +145,8 @@ def add_label(im, msg, fill='black', font='DejaVuSans.ttf', size=14,fontpath=Non
     
     w,h = imd.textsize(msg, font=font)
     if background is not None:
-        imd.rectangle([8,8,12+w,12+h], fill='white')
-    imd.text([10,10],msg, fill=fill,font=font)
+        imd.rectangle([ox-2,oy-2, ox+w+4,oy+h+4], fill='white')
+    imd.text([ox,oy],msg, fill=fill,font=font)
 
 def draw_rectangle(im, box, color='blue', width=2):
     imd=Pid.Draw(im)
