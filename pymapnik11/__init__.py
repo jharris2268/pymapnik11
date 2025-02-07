@@ -23,7 +23,7 @@
 from . import _mapnik 
 from ._mapnik import *
 from .styles import *
-from .loadmap import load_mapnik_carto
+from .loadmap import load_mapnik_carto, open_yaml
 from .utils import *
 
 try:

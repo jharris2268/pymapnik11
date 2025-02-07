@@ -37,7 +37,10 @@ def get_basepath(fn, abspath):
     
     a,b=os.path.split(fn)
     return a
-    
+
+def open_yaml(fn):
+    return yaml.load(io.open(fn),Loader=yaml.SafeLoader)
+
 def call_carto(fn):
     if io.open(fn).read(6)=='scale:':
 
@@ -46,7 +49,7 @@ def call_carto(fn):
             if yaml is None:
                 raise Exception("need pyyaml to convert yaml file to json format [call pip install --user pyyaml]")
                 
-            src = yaml.load(io.open(fn),Loader=yaml.SafeLoader)
+            src = open_yaml(fn)
             json.dump(src, io.open(convfn,'w'))
         fn = convfn            
 

@@ -254,6 +254,7 @@ void export_symbolizer_properties(py::module& m) {
     
     
 /* from mapnik/symbolizer_enumerations.hpp */    
+
     py::enum_<mapnik::line_cap_enum>(m,"stroke_linecap_enum")
         .value("BUTT_CAP",mapnik::line_cap_enum::BUTT_CAP)
         .value("SQUARE_CAP",mapnik::line_cap_enum::SQUARE_CAP)

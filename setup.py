@@ -68,5 +68,10 @@ setup(
     long_description='',
     ext_modules=ext_modules,
     #zip_safe=False,
-    cmdclass = {'build_ext': my_build_ext}
+    cmdclass = {'build_ext': my_build_ext},
+    entry_points={
+        'console_scripts': [
+            'pymapnik11_demo = pymapnik11.gui:main',
+        ]
+    }
 )
